@@ -1,6 +1,15 @@
+<script lang="ts" setup>
+const isLoggedIn = useLogin();
+
+const onSubmit = () => {
+  isLoggedIn.value = true;
+  navigateTo("/");
+};
+</script>
+
 <template>
   <div class="w-full max-w-xl bg-gray-100 rounded-md p-7">
-    <form class="flex flex-col gap-7">
+    <form class="flex flex-col gap-7" @submit.prevent="onSubmit">
       <div class="flex gap-x-7">
         <div
           class="rounded-full bg-gray-200 flex flex-shrink-0 items-center justify-center relative w-44 h-44 overflow-hidden"
@@ -17,12 +26,12 @@
           <a href="#" class="link">Did not get the code?</a>
         </div>
       </div>
-      
+
       <fieldset>
         <FormInput placeholder="Code" />
       </fieldset>
 
-      <FormButton>Submit</FormButton>
+      <FormButton type="submit">Submit</FormButton>
     </form>
   </div>
 </template>

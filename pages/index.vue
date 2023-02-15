@@ -1,3 +1,9 @@
+<script lang="ts" setup>
+definePageMeta({
+  middleware: "auth",
+});
+</script>
+
 <template>
   <div class="w-full max-w-5xl">
     <button
@@ -20,10 +26,7 @@
           <FormTextarea rows="3" placeholder="Type promt..."></FormTextarea>
         </fieldset>
         <fieldset>
-          <FormTextarea
-            rows="1"
-            placeholder="Type negative promt..."
-          />
+          <FormTextarea rows="1" placeholder="Type negative promt..." />
         </fieldset>
         <fieldset>
           <FormInput placeholder="Seed"></FormInput>
@@ -35,10 +38,7 @@
           <FormRange name="detail" label="Detail"></FormRange>
         </fieldset>
         <fieldset>
-          <FormRange
-            name="picture-number"
-            label="Number of pictures"
-          />
+          <FormRange name="picture-number" label="Number of pictures" />
         </fieldset>
       </div>
       <div>
