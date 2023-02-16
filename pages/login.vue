@@ -13,7 +13,7 @@ const onSubmit = () => navigateTo("code");
         <FormInput placeholder="E-mail" />
       </fieldset>
 
-      <FormButton type="submit">Login</FormButton>
+      <FormButton type="submit" is-full-width>Login</FormButton>
     </form>
   </div>
 </template>

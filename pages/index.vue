@@ -52,12 +52,12 @@ definePageMeta({
         </div>
       </div>
       <div>
-        <FormButton class="w-full bg-orange-500 text-white font-bold text-xl">
+        <FormButton is-full-width>
           Generate
         </FormButton>
       </div>
       <div>
-        <FormButton class="w-full text-orange-500 font-bold text-xl">
+        <FormButton variant="outlined" is-full-width>
           Make 3D
         </FormButton>
       </div>

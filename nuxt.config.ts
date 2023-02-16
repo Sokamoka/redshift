@@ -13,6 +13,10 @@ export default defineNuxtConfig({
     "@nuxtjs/google-fonts",
   ],
 
+  tailwindcss: {
+    cssPath: '~/assets/css/tailwind.css',
+  },
+
   googleFonts: {
     families: {
       Inter: [400, 600, 700],
