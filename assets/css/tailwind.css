@@ -5,7 +5,7 @@
 
 @layer components {
   .button {
-    @apply border-4 rounded-md p-4 font-bold text-xl transition-colors duration-150 ease-out;
+    @apply border-4 rounded-md p-[14px] font-bold text-xl text-center transition-colors duration-150 ease-out;
   }
 
   .button.is-outlined {
