@@ -1,5 +1,5 @@
 export default defineEventHandler(async () => {
-  const response = await fetch("http://34.118.84.225:7860/sdapi/v1/progress", {
+  const response = await fetch(`${process.env.API_BASE_URL}/progress`, {
     method: "GET",
   });
   const responseData = await response.json();
