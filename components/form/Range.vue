@@ -1,15 +1,38 @@
 <script lang="ts" setup>
 const props = defineProps({
+  modelValue: {
+    type: Number,
+    deafult: 0,
+  },
+
   name: {
     type: String,
-    required: true
+    required: true,
   },
 
   label: {
     type: String,
-    default: ''
-  }
-})
+    default: "",
+  },
+
+  min: {
+    type: Number,
+    deafult: 0,
+  },
+
+  max: {
+    type: Number,
+    deafult: 100,
+  },
+});
+
+const emit = defineEmits([
+  'update:modelValue'
+])
+
+const onChange = (event: Event) => {
+  emit('update:modelValue', Number((event.target as HTMLInputElement).value))
+};
 </script>
 
 <template>
@@ -19,7 +42,11 @@ const props = defineProps({
   <input
     type="range"
     :id="name"
+    :value="modelValue"
+    :min="min"
+    :max="max"
     class="w-full h-1 bg-gray-900 rounded-lg appearance-none cursor-pointer"
+    @input="onChange"
   />
 </template>
 

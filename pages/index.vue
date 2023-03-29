@@ -1,7 +1,73 @@
 <script lang="ts" setup>
+import { CLG_SCALE } from "~~/constants";
+
 definePageMeta({
   middleware: "auth",
 });
+
+const mainImageSrc = ref("");
+
+const parameters = reactive({
+  steps: 30,
+  batch_size: 1,
+  cfg_scale: 6,
+  prompt:
+    "An infinite desert, in the middle of it a large metal wall that goes around in a circle.",
+  negative_prompt: "",
+  seed: -1,
+});
+
+const { state, isLoading, execute } = useAsyncState(
+  () => $fetch("/api/txt-2-img", { method: "POST", body: parameters }),
+  {},
+  {
+    immediate: false,
+    onError: (e) => console.log(e),
+  }
+);
+
+const { state: progress, execute: getProgress } = useAsyncState(
+  () => $fetch("/api/progress"),
+  {},
+  {
+    immediate: false,
+    resetOnExecute: false,
+  }
+);
+
+const { pause, resume } = useTimeoutPoll(getProgress, 1000);
+
+const cfgScale = computed({
+  get() {
+    return CLG_SCALE.get(parameters.cfg_scale).order;
+  },
+  set(value) {
+    const current = Array.from(CLG_SCALE.keys());
+    parameters.cfg_scale = current[value];
+  },
+});
+
+const cfgScaleLabel = computed(() => CLG_SCALE.get(parameters.cfg_scale).name);
+
+const progressImage = computed(() =>
+  progress.value?.current_image
+    ? `data:image/png;base64,${progress.value?.current_image}`
+    : ""
+);
+
+watch(state, ({ images }) => {
+  if (images) pause();
+  mainImageSrc.value = images ? `data:image/png;base64,${images[0]}` : "";
+});
+
+const onGenerate = () => {
+  execute();
+  resume();
+};
+
+const onChangeImage = (src: string) => {
+  mainImageSrc.value = `data:image/png;base64,${src}`;
+};
 </script>
 
 <template>
@@ -29,10 +95,18 @@ definePageMeta({
     >
       <div class="flex flex-col gap-7">
         <fieldset>
-          <FormTextarea rows="3" placeholder="Type promt..."></FormTextarea>
+          <FormTextarea
+            v-model="parameters.prompt"
+            rows="3"
+            placeholder="Type promt..."
+          ></FormTextarea>
         </fieldset>
         <fieldset>
-          <FormTextarea rows="1" placeholder="Type negative promt..." />
+          <FormTextarea
+            v-model="parameters.negative_prompt"
+            rows="1"
+            placeholder="Type negative promt..."
+          />
         </fieldset>
         <fieldset>
           <FormInput placeholder="Seed">
@@ -42,31 +116,72 @@ definePageMeta({
           </FormInput>
         </fieldset>
         <fieldset>
-          <FormRange name="clg-scale" label="CLG Scale"></FormRange>
+          <FormRange
+            v-model="cfgScale"
+            name="clg-scale"
+            :label="`CLG Scale (${cfgScaleLabel})`"
+            :min="0"
+            :max="4"
+          ></FormRange>
         </fieldset>
         <fieldset>
-          <FormRange name="detail" label="Detail"></FormRange>
+          <FormRange
+            v-model="parameters.steps"
+            name="detail"
+            :label="`Detail (${parameters.steps})`"
+            :min="20"
+            :max="100"
+          ></FormRange>
         </fieldset>
         <fieldset>
-          <FormRange name="picture-number" label="Number of pictures" />
+          <FormRange
+            v-model="parameters.batch_size"
+            name="picture-number"
+            :label="`Number of pictures (${parameters.batch_size})`"
+            :min="1"
+            :max="10"
+          />
         </fieldset>
       </div>
       <div>
         <div
-          class="flex items-center justify-center w-full aspect-square bg-white rounded-md relative overflow-hidden"
+          class="flex flex-col items-center justify-center w-full aspect-square bg-white rounded-md relative overflow-hidden"
         >
-          <img src="~/assets/img/are-logo.svg" class="w-12 h-12" />
-          <div class="absolute inset-0">
-            <img src="https://picsum.photos/800" />
+          <img
+            v-if="!isLoading"
+            src="~/assets/img/are-logo.svg"
+            class="w-12 h-12"
+          />
+          <div v-if="mainImageSrc" class="absolute inset-0">
+            <img :src="mainImageSrc" />
           </div>
+          <ClientOnly>
+            <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
+              {{ Math.round((progress.progress || 0) * 100) }} %
+            </div>
+            <img
+              v-if="progressImage && isLoading"
+              :src="progressImage"
+              class="w-20 h-20 opacity-30"
+            />
+          </ClientOnly>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-3">
+          <template v-for="image in state.images">
+            <img
+              :src="`data:image/png;base64,${image}`"
+              class="w-24 h-24 cursor-pointer"
+              @click="onChangeImage(image)"
+            />
+          </template>
         </div>
       </div>
       <div>
-        <FormButton is-full-width> Generate </FormButton>
+        <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
       </div>
-      <div>
+      <!-- <div>
         <FormButton variant="outlined" is-full-width> Make 3D </FormButton>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
