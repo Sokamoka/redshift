@@ -22,7 +22,10 @@ const { state, isLoading, execute } = useAsyncState(
   {},
   {
     immediate: false,
-    onError: (e) => console.log(e),
+    onError: (e) => {
+      console.log(e);
+      pause();
+    },
   }
 );
 
@@ -156,7 +159,10 @@ const onChangeImage = (src: string) => {
             <img :src="mainImageSrc" />
           </div>
           <ClientOnly>
-            <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
+            <div
+              v-if="isLoading && progress.progress"
+              class="text-2xl font-bold"
+            >
               {{ Math.round((progress.progress || 0) * 100) }} %
             </div>
             <img
