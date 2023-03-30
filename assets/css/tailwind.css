@@ -5,7 +5,7 @@
 
 @layer components {
   .button {
-    @apply border-4 rounded-md p-[14px] font-bold text-xl text-center transition-colors duration-150 ease-out;
+    @apply border-4 rounded-md p-[14px] font-semibold text-xl text-center transition-colors duration-150 ease-out;
   }
 
   .button.is-outlined {
@@ -13,7 +13,7 @@
   }
 
   .button.is-primary {
-    @apply bg-orange-500 text-white border-orange-500 hover:bg-orange-600 hover:border-orange-600;
+    @apply bg-purple-600 text-white border-purple-600 hover:bg-purple-500;
   }
 
   a.is-link {

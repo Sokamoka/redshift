@@ -15,6 +15,7 @@ const parameters = reactive({
     "An infinite desert, in the middle of it a large metal wall that goes around in a circle.",
   negative_prompt: "",
   seed: -1,
+  save_images: true,
 });
 
 const { state, isLoading, execute } = useAsyncState(
@@ -76,27 +77,51 @@ const onChangeImage = (src: string) => {
 <template>
   <div class="w-full max-w-5xl">
     <div class="flex">
+      <div class="flex-1 flex items-center">
+        <div class="bg-orange-500 rounded-full w-10 h-10"></div>
+        <span class="px-5 text-orange-500 font-bold">areuser</span>
+      </div>
       <button
         type="button"
-        class="px-7 py-5 text-base text-gray-900 font-semibold bg-gray-100 rounded-t-md"
+        class="px-7 py-5 text-base text-gray-900 font-semibold rounded-t-md"
+      >
+        Image to Image
+      </button>
+      <button
+        type="button"
+        class="px-7 py-5 text-base text-amber-100 font-medium bg-slate-900 rounded-t-md"
       >
         Text to Image
       </button>
-      <button
-        type="button"
-        class="px-7 py-5 text-base text-orange-500 font-semibold bg-white rounded-t-md"
-      >
-        Image to image
-      </button>
-      <div class="flex-1 flex items-center justify-end">
-        <span class="px-5 text-orange-500 font-bold">areuser</span>
-        <div class="bg-orange-500 rounded-full w-10 h-10"></div>
-      </div>
     </div>
     <div
-      class="grid grid-cols-[40%_1fr] grid-rows-[1fr_64px] gap-7 place-items-stretch w-full bg-gray-100 rounded-md p-8"
+      class="grid grid-cols-[1fr_40%] place-items-stretch w-full bg-amber-100 rounded-md overflow-hidden rounded-tr-none"
     >
-      <div class="flex flex-col gap-7">
+      <div
+        class="flex flex-col items-center justify-center w-full relative overflow-hidden"
+      >
+        <img
+          v-if="!isLoading && !mainImageSrc"
+          src="~/assets/img/are-logo.svg"
+          class="w-12 h-12"
+        />
+        <img
+          v-if="mainImageSrc"
+          :src="mainImageSrc"
+          class="object-contain w-full h-full"
+        />
+        <ClientOnly>
+          <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
+            {{ Math.round((progress.progress || 0) * 100) }} %
+          </div>
+          <img
+            v-if="progressImage && isLoading"
+            :src="progressImage"
+            class="w-20 h-20 opacity-30"
+          />
+        </ClientOnly>
+      </div>
+      <div class="flex flex-col gap-6 p-6 bg-slate-900">
         <fieldset>
           <FormTextarea
             v-model="parameters.prompt"
@@ -145,33 +170,8 @@ const onChangeImage = (src: string) => {
             :max="10"
           />
         </fieldset>
-      </div>
-      <div>
-        <div
-          class="flex flex-col items-center justify-center w-full aspect-square bg-white rounded-md relative overflow-hidden"
-        >
-          <img
-            v-if="!isLoading"
-            src="~/assets/img/are-logo.svg"
-            class="w-12 h-12"
-          />
-          <div v-if="mainImageSrc" class="absolute inset-0">
-            <img :src="mainImageSrc" />
-          </div>
-          <ClientOnly>
-            <div
-              v-if="isLoading && progress.progress"
-              class="text-2xl font-bold"
-            >
-              {{ Math.round((progress.progress || 0) * 100) }} %
-            </div>
-            <img
-              v-if="progressImage && isLoading"
-              :src="progressImage"
-              class="w-20 h-20 opacity-30"
-            />
-          </ClientOnly>
-        </div>
+        <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
+
         <div class="flex flex-wrap gap-3 mt-3">
           <template v-for="image in state.images">
             <img
@@ -182,12 +182,6 @@ const onChangeImage = (src: string) => {
           </template>
         </div>
       </div>
-      <div>
-        <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
-      </div>
-      <!-- <div>
-        <FormButton variant="outlined" is-full-width> Make 3D </FormButton>
-      </div> -->
     </div>
   </div>
 </template>
