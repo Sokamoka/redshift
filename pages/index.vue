@@ -116,9 +116,6 @@ const onChangeImage = (src: string) => {
   mainImageSrc.value = `data:image/png;base64,${src}`;
 };
 
-// const onGenerateRandom = () => {
-//   parameters.seed = generateRandomInt();
-// };
 const onEditProperties = () => {
   panelState.value = PanelState.Minimal;
 };
@@ -202,24 +199,8 @@ const onResetEditProperties = () => {
             />
           </fieldset>
           <fieldset>
-            <label class="flex w-full justify-between text-base text-slate-500">
-              Fixed style
-              <input type="checkbox" v-model="fixedStyle" />
-            </label>
+            <FormToggle v-model="fixedStyle" label="Fixed style" />
           </fieldset>
-          <!-- <fieldset>
-              <FormInput v-model="seed" placeholder="Seed">
-                <template v-slot:append>
-                  <a
-                    href="#"
-                    class="is-link px-3"
-                    @click.prevent="onGenerateRandom"
-                  >
-                    Randomize
-                  </a>
-                </template>
-              </FormInput>
-            </fieldset> -->
           <fieldset>
             <FormRange
               v-model="cfgScale"

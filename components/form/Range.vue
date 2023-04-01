@@ -26,12 +26,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'update:modelValue'
-])
+const emit = defineEmits(["update:modelValue"]);
 
 const onChange = (event: Event) => {
-  emit('update:modelValue', Number((event.target as HTMLInputElement).value))
+  emit("update:modelValue", Number((event.target as HTMLInputElement).value));
 };
 </script>
 
@@ -48,13 +46,13 @@ const onChange = (event: Event) => {
     :value="modelValue"
     :min="min"
     :max="max"
-    class="w-full h-0.5 bg-gradient-to-r from-slate-800 via-slate-400 to-slate-800  rounded-lg appearance-none cursor-pointer"
+    class="w-full h-0.5 bg-gradient-to-r from-slate-800 via-slate-400 to-slate-800 rounded-lg appearance-none cursor-pointer"
     @input="onChange"
   />
 </template>
 
 <style scoped>
 input[type="range"]::-webkit-slider-thumb {
-  @apply bg-amber-100 appearance-none h-7 w-7 shadow-md rounded-full;
+  @apply bg-amber-100 appearance-none h-5 w-5 shadow-md rounded-full;
 }
 </style>
