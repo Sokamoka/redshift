@@ -6,6 +6,9 @@ export default <Partial<Config>>{
       fontFamily: {
         sans: ["Roboto, sans-serif"],
       },
+      gridTemplateRows: {
+        'mincontent': 'min-content'
+      }
     },
   },
 };

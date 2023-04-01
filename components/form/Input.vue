@@ -28,9 +28,6 @@ export default {
     <slot name="prepend" />
     <input
       v-model="modelValue"
-      type="number"
-      min="-1"
-      maxlength="10"
       class="p-3 outline-none flex-1 w-full bg-transparent"
       v-bind="$attrs"
     />

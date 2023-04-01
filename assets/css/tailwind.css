@@ -8,11 +8,11 @@ body {
 
 @layer components {
   .button {
-    @apply border-4 rounded-md p-[14px] font-semibold text-xl text-center transition-colors duration-150 ease-out;
+    @apply border-2 rounded-md p-[14px] font-semibold text-xl text-center transition-colors duration-150 ease-out;
   }
 
   .button.is-outlined {
-    @apply border-orange-500 text-orange-500 hover:border-orange-600 hover:text-orange-600;
+    @apply border-purple-600 text-white hover:border-purple-500;
   }
 
   .button.is-primary {
