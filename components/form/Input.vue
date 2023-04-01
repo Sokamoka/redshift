@@ -1,17 +1,39 @@
 <script lang="ts">
 export default {
-  name: 'FormInput',
+  name: "FormInput",
 
   inheritAttrs: false,
-}
+
+  props: {
+    modelValue: {
+      type: [Number, String],
+      default: "",
+    },
+  },
+
+  setup(props, { emit }) {
+    const { modelValue } = useVModels(props, emit);
+
+    return {
+      modelValue,
+    };
+  },
+};
 </script>
 
 <template>
   <div
-    class="flex items-center bg-white border-4 border-gray-900 focus-within:border-orange-500 rounded-md w-full"
+    class="flex items-center bg-slate-800 border-2 border-slate-800 text-slate-300 focus-within:border-amber-100 rounded-md w-full"
   >
     <slot name="prepend" />
-    <input type="text" class="p-3 outline-none flex-1 w-full" v-bind="$attrs" />
+    <input
+      v-model="modelValue"
+      type="number"
+      min="-1"
+      maxlength="10"
+      class="p-3 outline-none flex-1 w-full bg-transparent"
+      v-bind="$attrs"
+    />
     <slot name="append" />
   </div>
 </template>

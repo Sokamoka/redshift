@@ -1,9 +1,16 @@
 <script lang="ts" setup>
 import { CLG_SCALE } from "~~/constants";
+import { generateRandomInt } from "~/utils/generate-random-int";
 
 definePageMeta({
   middleware: "auth",
 });
+
+const storedSettings = useSessionStorage(
+  "redshift",
+  { seed: generateRandomInt(), fixedStyle: false },
+  { mergeDefaults: true }
+);
 
 const mainImageSrc = ref("");
 
@@ -11,8 +18,7 @@ const parameters = reactive({
   steps: 30,
   batch_size: 1,
   cfg_scale: 6,
-  prompt:
-    "An infinite desert, in the middle of it a large metal wall that goes around in a circle.",
+  prompt: "",
   negative_prompt: "",
   seed: -1,
   save_images: true,
@@ -53,6 +59,24 @@ const cfgScale = computed({
 
 const cfgScaleLabel = computed(() => CLG_SCALE.get(parameters.cfg_scale).name);
 
+const seed = computed<number | string>({
+  get() {
+    return parameters.seed === -1 ? "" : parameters.seed;
+  },
+  set(value: number | string) {
+    parameters.seed = value !== "" ? Number(value) : -1;
+  },
+});
+
+const fixedStyle = computed<boolean>({
+  get() {
+    return storedSettings.value.fixedStyle;
+  },
+  set(value: boolean) {
+    storedSettings.value.fixedStyle = value;
+  },
+});
+
 const progressImage = computed(() =>
   progress.value?.current_image
     ? `data:image/png;base64,${progress.value?.current_image}`
@@ -65,6 +89,14 @@ watch(state, ({ images }) => {
 });
 
 const onGenerate = () => {
+  if (fixedStyle.value) {
+    parameters.seed = storedSettings.value.seed;
+  } else {
+    const newSeed = generateRandomInt();
+    parameters.seed = newSeed;
+    storedSettings.value.seed = newSeed;
+  }
+  console.log(parameters.seed);
   execute();
   resume();
 };
@@ -72,6 +104,10 @@ const onGenerate = () => {
 const onChangeImage = (src: string) => {
   mainImageSrc.value = `data:image/png;base64,${src}`;
 };
+
+// const onGenerateRandom = () => {
+//   parameters.seed = generateRandomInt();
+// };
 </script>
 
 <template>
@@ -121,58 +157,87 @@ const onChangeImage = (src: string) => {
           />
         </ClientOnly>
       </div>
-      <div class="flex flex-col gap-6 p-6 bg-slate-900">
-        <fieldset>
-          <FormTextarea
-            v-model="parameters.prompt"
-            rows="3"
-            placeholder="Type promt..."
-          ></FormTextarea>
-        </fieldset>
-        <fieldset>
-          <FormTextarea
-            v-model="parameters.negative_prompt"
-            rows="1"
-            placeholder="Type negative promt..."
-          />
-        </fieldset>
-        <fieldset>
-          <FormInput placeholder="Seed">
-            <template v-slot:append>
-              <a href="#" class="is-link px-3">Randomize</a>
-            </template>
-          </FormInput>
-        </fieldset>
-        <fieldset>
-          <FormRange
-            v-model="cfgScale"
-            name="clg-scale"
-            :label="`CLG Scale (${cfgScaleLabel})`"
-            :min="0"
-            :max="4"
-          ></FormRange>
-        </fieldset>
-        <fieldset>
-          <FormRange
-            v-model="parameters.steps"
-            name="detail"
-            :label="`Detail (${parameters.steps})`"
-            :min="20"
-            :max="100"
-          ></FormRange>
-        </fieldset>
-        <fieldset>
-          <FormRange
-            v-model="parameters.batch_size"
-            name="picture-number"
-            :label="`Number of pictures (${parameters.batch_size})`"
-            :min="1"
-            :max="10"
-          />
-        </fieldset>
-        <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
+      <div class="flex flex-col p-6 bg-slate-900">
+        <div class="flex-1 flex flex-col gap-6">
+          <fieldset>
+            <FormTextarea
+              v-model="parameters.prompt"
+              rows="3"
+              placeholder="Type promt..."
+            ></FormTextarea>
+          </fieldset>
+          <fieldset>
+            <FormTextarea
+              v-model="parameters.negative_prompt"
+              rows="1"
+              placeholder="Type negative promt..."
+            />
+          </fieldset>
+          <fieldset>
+            <input type="checkbox" v-model="fixedStyle" />
+          </fieldset>
+          <!-- <fieldset>
+            <FormInput v-model="seed" placeholder="Seed">
+              <template v-slot:append>
+                <a
+                  href="#"
+                  class="is-link px-3"
+                  @click.prevent="onGenerateRandom"
+                >
+                  Randomize
+                </a>
+              </template>
+            </FormInput>
+          </fieldset> -->
+          <fieldset>
+            <FormRange
+              v-model="cfgScale"
+              name="clg-scale"
+              label="Conformity"
+              :min="0"
+              :max="4"
+            >
+              <template v-slot:value>
+                <span class="text-amber-100 font-bold">
+                  {{ cfgScaleLabel }}
+                </span>
+              </template>
+            </FormRange>
+          </fieldset>
+          <fieldset>
+            <FormRange
+              v-model="parameters.steps"
+              name="detail"
+              label="Detail"
+              :min="20"
+              :max="150"
+            >
+              <template v-slot:value>
+                <span class="text-amber-100 font-bold">{{
+                  parameters.steps
+                }}</span>
+              </template>
+            </FormRange>
+          </fieldset>
+          <fieldset>
+            <FormRange
+              v-model="parameters.batch_size"
+              name="picture-number"
+              label="Output"
+              :min="1"
+              :max="10"
+            >
+              <template v-slot:value>
+                <span class="text-amber-100 font-bold">{{
+                  parameters.batch_size
+                }}</span>
+              </template>
+            </FormRange>
+          </fieldset>
+          <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
+        </div>
 
-        <div class="flex flex-wrap gap-3 mt-3">
+        <div class="flex flex-wrap gap-3">
           <template v-for="image in state.images">
             <img
               :src="`data:image/png;base64,${image}`"

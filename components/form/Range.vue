@@ -36,22 +36,25 @@ const onChange = (event: Event) => {
 </script>
 
 <template>
-  <label :for="name" class="block text-base font-semibold text-gray-900">
-    {{ label }}
-  </label>
+  <div class="flex">
+    <label :for="name" class="flex-1 block text-base text-slate-500">
+      {{ label }}
+    </label>
+    <slot name="value" />
+  </div>
   <input
     type="range"
     :id="name"
     :value="modelValue"
     :min="min"
     :max="max"
-    class="w-full h-1 bg-gray-900 rounded-lg appearance-none cursor-pointer"
+    class="w-full h-0.5 bg-gradient-to-r from-slate-800 via-slate-400 to-slate-800  rounded-lg appearance-none cursor-pointer"
     @input="onChange"
   />
 </template>
 
 <style scoped>
 input[type="range"]::-webkit-slider-thumb {
-  @apply bg-orange-500 appearance-none h-7 w-7 shadow-md rounded-full;
+  @apply bg-amber-100 appearance-none h-7 w-7 shadow-md rounded-full;
 }
 </style>
