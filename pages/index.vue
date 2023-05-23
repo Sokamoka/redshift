@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { CLG_SCALE } from "~~/constants";
+import {
+  CLG_SCALE,
+  DEFAULT_IMAGE_WIDTH,
+  DEFAULT_IMAGE_HEIGHT,
+} from "~~/constants";
 import { generateRandomInt } from "~/utils/generate-random-int";
 
 enum PanelState {
@@ -8,9 +12,9 @@ enum PanelState {
   Minimal,
 }
 
-definePageMeta({
-  middleware: "auth",
-});
+// definePageMeta({
+//   middleware: "auth",
+// });
 
 const mainImageSrc = ref("");
 const panelState = ref<PanelState>(PanelState.Form);
@@ -29,6 +33,8 @@ const parameters = reactive({
   negative_prompt: "",
   seed: -1,
   save_images: true,
+  width: DEFAULT_IMAGE_WIDTH,
+  height: DEFAULT_IMAGE_HEIGHT,
 });
 
 const { state, isLoading, execute } = useAsyncState(
@@ -66,21 +72,23 @@ const cfgScale = computed({
 
 const cfgScaleLabel = computed(() => CLG_SCALE.get(parameters.cfg_scale).name);
 
-const seed = computed<number | string>({
-  get() {
-    return parameters.seed === -1 ? "" : parameters.seed;
-  },
-  set(value: number | string) {
-    parameters.seed = value !== "" ? Number(value) : -1;
-  },
-});
-
 const fixedStyle = computed<boolean>({
   get() {
     return storedSettings.value.fixedStyle;
   },
   set(value: boolean) {
     storedSettings.value.fixedStyle = value;
+  },
+});
+
+const aspectRatio = computed<string>({
+  get() {
+    return getAspectRatio(parameters.width, parameters.height);
+  },
+  set(value) {
+    const { width, height } = setImageDimensions(value);
+    parameters.width = width;
+    parameters.height = height;
   },
 });
 
@@ -91,7 +99,6 @@ const progressImage = computed(() =>
 );
 
 watch(state, ({ images }) => {
-  console.log("images:", images);
   if (images) {
     pause();
     panelState.value = PanelState.Result;
@@ -117,7 +124,7 @@ const onChangeImage = (src: string) => {
 };
 
 const onEditProperties = () => {
-  panelState.value = PanelState.Minimal;
+  panelState.value = PanelState.Form;
 };
 const onResetEditProperties = () => {
   panelState.value = PanelState.Result;
@@ -126,7 +133,7 @@ const onResetEditProperties = () => {
 
 <template>
   <div class="w-full max-w-5xl">
-    <div class="flex">
+    <!-- <div class="flex">
       <div class="flex-1 flex items-center">
         <div class="bg-orange-500 rounded-full w-10 h-10"></div>
         <span class="px-5 text-orange-500 font-bold">areuser</span>
@@ -144,7 +151,7 @@ const onResetEditProperties = () => {
       >
         Text to Image
       </button>
-    </div>
+    </div> -->
     <div
       class="grid grid-cols-[1fr_40%] place-items-stretch w-full h-[700px] bg-amber-100 rounded-md overflow-hidden rounded-tr-none"
     >
@@ -159,7 +166,7 @@ const onResetEditProperties = () => {
         <img
           v-if="mainImageSrc"
           :src="mainImageSrc"
-          class="object-cover w-full h-full"
+          class="object-contain w-full h-full"
         />
         <ClientOnly>
           <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
@@ -199,7 +206,7 @@ const onResetEditProperties = () => {
             />
           </fieldset>
           <fieldset>
-            <FormToggle v-model="fixedStyle" label="Fixed style" />
+            <FormToggle v-model="fixedStyle" label="Generate similar" />
           </fieldset>
           <fieldset>
             <FormRange
@@ -245,6 +252,83 @@ const onResetEditProperties = () => {
                 }}</span>
               </template>
             </FormRange>
+          </fieldset>
+
+          <fieldset>
+            <div class="grid grid-cols-3 gap-4">
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_PORTRAIT
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_PORTRAIT"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-3 h-5 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_PORTRAIT
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_LANDSCAPE
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_LANDSCAPE"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-5 h-3 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_LANDSCAPE
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_SQUARE
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_SQUARE"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-5 h-5 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_SQUARE
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+            </div>
           </fieldset>
           <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
         </div>
