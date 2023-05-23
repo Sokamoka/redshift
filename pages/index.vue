@@ -129,6 +129,9 @@ const onEditProperties = () => {
 const onResetEditProperties = () => {
   panelState.value = PanelState.Result;
 };
+const onCancel = () => {
+  panelState.value = PanelState.Form;
+};
 </script>
 
 <template>
@@ -330,7 +333,8 @@ const onResetEditProperties = () => {
               </label>
             </div>
           </fieldset>
-          <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
+          <FormButton v-if="isLoading" variant="secondary" is-full-width @click="onCancel"> Cancel </FormButton>
+          <FormButton v-else is-full-width @click="onGenerate"> Generate </FormButton>
         </div>
 
         <div
