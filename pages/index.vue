@@ -37,7 +37,7 @@ const parameters = reactive({
   height: DEFAULT_IMAGE_HEIGHT,
 });
 
-const { state, isLoading, execute } = useAsyncState(
+const { state, isLoading, error, execute } = useAsyncState(
   () => $fetch("/api/txt-2-img", { method: "POST", body: parameters }),
   {},
   {
@@ -172,14 +172,30 @@ const onCancel = () => {
           class="object-contain w-full h-full"
         />
         <ClientOnly>
-          <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
+          <template v-if="isLoading && progress.progress">
+            <PercentLoader
+              :percent="progress.progress || 0"
+              class="w-20 h-20"
+            />
+
+            <div class="text-slate-900 font-semibold text-xl mt-5">
+              Generating batch...
+            </div>
+          </template>
+          <!-- <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
             {{ Math.round((progress.progress || 0) * 100) }} %
-          </div>
-          <img
+          </div> -->
+          <!-- <img
             v-if="progressImage && isLoading"
             :src="progressImage"
             class="w-20 h-20 opacity-30"
-          />
+          /> -->
+          <div
+            v-if="error"
+            class="text-slate-900 font-semibold text-xl mt-5 max-w-[285px] text-center"
+          >
+            Oops... Looks like something went wrong. Try again!
+          </div>
         </ClientOnly>
       </div>
       <div class="flex flex-col bg-slate-900 overflow-hidden">
@@ -333,8 +349,17 @@ const onCancel = () => {
               </label>
             </div>
           </fieldset>
-          <FormButton v-if="isLoading" variant="secondary" is-full-width @click="onCancel"> Cancel </FormButton>
-          <FormButton v-else is-full-width @click="onGenerate"> Generate </FormButton>
+          <FormButton
+            v-if="isLoading"
+            variant="secondary"
+            is-full-width
+            @click="onCancel"
+          >
+            Cancel
+          </FormButton>
+          <FormButton v-else is-full-width @click="onGenerate">
+            Generate
+          </FormButton>
         </div>
 
         <div
