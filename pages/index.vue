@@ -125,6 +125,7 @@ const onChangeImage = (src: string) => {
 
 const onEditProperties = () => {
   panelState.value = PanelState.Form;
+  mainImageSrc.value = "";
 };
 const onResetEditProperties = () => {
   panelState.value = PanelState.Result;
@@ -156,15 +157,15 @@ const onCancel = () => {
       </button>
     </div> -->
     <div
-      class="grid grid-cols-[1fr_40%] place-items-stretch w-full h-[700px] bg-amber-100 rounded-md overflow-hidden rounded-tr-none"
+      class="grid grid-cols-[1fr_40%] place-items-stretch w-full h-[700px] bg-amber-100 rounded-md overflow-hidden"
     >
       <div
         class="flex flex-col items-center justify-center w-full relative overflow-hidden"
       >
         <img
           v-if="!isLoading && !mainImageSrc"
-          src="~/assets/img/are-logo.svg"
-          class="w-12 h-12"
+          src="~/assets/img/logo.svg"
+          class="w-auto h-24"
         />
         <img
           v-if="mainImageSrc"
@@ -175,7 +176,7 @@ const onCancel = () => {
           <template v-if="isLoading && progress.progress">
             <PercentLoader
               :percent="progress.progress || 0"
-              class="w-20 h-20"
+              class="w-20 h-20 transform -rotate-90"
             />
 
             <div class="text-slate-900 font-semibold text-xl mt-5">
@@ -197,6 +198,13 @@ const onCancel = () => {
             Oops... Looks like something went wrong. Try again!
           </div>
         </ClientOnly>
+        <a
+          v-if="mainImageSrc"
+          href="#"
+          class="absolute bottom-6 right-6 bg-white rounded-md p-3"
+        >
+          <img src="~/assets/img/icon-download.svg" class="w-7 h-7" />
+        </a>
       </div>
       <div class="flex flex-col bg-slate-900 overflow-hidden">
         <EditProperties
@@ -369,12 +377,16 @@ const onCancel = () => {
             { 'flex-grow': panelState === PanelState.Result },
           ]"
         >
-          <span
+          <div
             v-if="panelState === PanelState.Result"
-            class="block w-full text-center font-medium text-slate-300"
+            class="flex justify-between"
           >
-            Variations
-          </span>
+            <span class="block w-full font-medium text-slate-300">
+              Variations
+            </span>
+
+            <a href="#" class="is-link whitespace-nowrap">Download all</a>
+          </div>
           <div
             :class="[
               'gap-3 overflow-scroll h-full',
@@ -390,6 +402,8 @@ const onCancel = () => {
                   'cursor-pointer h-auto transition ease-in-out rounded',
                   {
                     'w-12': panelState === PanelState.Minimal,
+                    'outline outline-4 outline-purple-500 -outline-offset-4':
+                      mainImageSrc === `data:image/png;base64,${image}`,
                   },
                 ]"
                 @click="onChangeImage(image)"

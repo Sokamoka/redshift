@@ -6,5 +6,5 @@ export const CLG_SCALE = new Map()
   .set(20, { name: "Ultra High", order: 4 });
 
 // Default: Portrait
-export const DEFAULT_IMAGE_HEIGHT = 500;
-export const DEFAULT_IMAGE_WIDTH = 340;
+export const DEFAULT_IMAGE_HEIGHT = 1920; // 640
+export const DEFAULT_IMAGE_WIDTH = 1080; // 360
