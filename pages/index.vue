@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { CLG_SCALE } from "~~/constants";
+import {
+  CLG_SCALE,
+  DEFAULT_IMAGE_WIDTH,
+  DEFAULT_IMAGE_HEIGHT,
+} from "~~/constants";
 import { generateRandomInt } from "~/utils/generate-random-int";
 
 enum PanelState {
@@ -8,9 +12,9 @@ enum PanelState {
   Minimal,
 }
 
-definePageMeta({
-  middleware: "auth",
-});
+// definePageMeta({
+//   middleware: "auth",
+// });
 
 const mainImageSrc = ref("");
 const panelState = ref<PanelState>(PanelState.Form);
@@ -29,9 +33,11 @@ const parameters = reactive({
   negative_prompt: "",
   seed: -1,
   save_images: true,
+  width: DEFAULT_IMAGE_WIDTH,
+  height: DEFAULT_IMAGE_HEIGHT,
 });
 
-const { state, isLoading, execute } = useAsyncState(
+const { state, isLoading, error, execute } = useAsyncState(
   () => $fetch("/api/txt-2-img", { method: "POST", body: parameters }),
   {},
   {
@@ -66,21 +72,23 @@ const cfgScale = computed({
 
 const cfgScaleLabel = computed(() => CLG_SCALE.get(parameters.cfg_scale).name);
 
-const seed = computed<number | string>({
-  get() {
-    return parameters.seed === -1 ? "" : parameters.seed;
-  },
-  set(value: number | string) {
-    parameters.seed = value !== "" ? Number(value) : -1;
-  },
-});
-
 const fixedStyle = computed<boolean>({
   get() {
     return storedSettings.value.fixedStyle;
   },
   set(value: boolean) {
     storedSettings.value.fixedStyle = value;
+  },
+});
+
+const aspectRatio = computed<string>({
+  get() {
+    return getAspectRatio(parameters.width, parameters.height);
+  },
+  set(value) {
+    const { width, height } = setImageDimensions(value);
+    parameters.width = width;
+    parameters.height = height;
   },
 });
 
@@ -91,7 +99,6 @@ const progressImage = computed(() =>
 );
 
 watch(state, ({ images }) => {
-  console.log("images:", images);
   if (images) {
     pause();
     panelState.value = PanelState.Result;
@@ -117,16 +124,20 @@ const onChangeImage = (src: string) => {
 };
 
 const onEditProperties = () => {
-  panelState.value = PanelState.Minimal;
+  panelState.value = PanelState.Form;
+  mainImageSrc.value = "";
 };
 const onResetEditProperties = () => {
   panelState.value = PanelState.Result;
+};
+const onCancel = () => {
+  panelState.value = PanelState.Form;
 };
 </script>
 
 <template>
   <div class="w-full max-w-5xl">
-    <div class="flex">
+    <!-- <div class="flex">
       <div class="flex-1 flex items-center">
         <div class="bg-orange-500 rounded-full w-10 h-10"></div>
         <span class="px-5 text-orange-500 font-bold">areuser</span>
@@ -144,33 +155,56 @@ const onResetEditProperties = () => {
       >
         Text to Image
       </button>
-    </div>
+    </div> -->
     <div
-      class="grid grid-cols-[1fr_40%] place-items-stretch w-full h-[700px] bg-amber-100 rounded-md overflow-hidden rounded-tr-none"
+      class="grid grid-cols-[1fr_40%] place-items-stretch w-full h-[700px] bg-amber-100 rounded-md overflow-hidden"
     >
       <div
         class="flex flex-col items-center justify-center w-full relative overflow-hidden"
       >
         <img
           v-if="!isLoading && !mainImageSrc"
-          src="~/assets/img/are-logo.svg"
-          class="w-12 h-12"
+          src="~/assets/img/logo.svg"
+          class="w-auto h-24"
         />
         <img
           v-if="mainImageSrc"
           :src="mainImageSrc"
-          class="object-cover w-full h-full"
+          class="object-contain w-full h-full"
         />
         <ClientOnly>
-          <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
+          <template v-if="isLoading && progress.progress">
+            <PercentLoader
+              :percent="progress.progress || 0"
+              class="w-20 h-20 transform -rotate-90"
+            />
+
+            <div class="text-slate-900 font-semibold text-xl mt-5">
+              Generating batch...
+            </div>
+          </template>
+          <!-- <div v-if="isLoading && progress.progress" class="text-2xl font-bold">
             {{ Math.round((progress.progress || 0) * 100) }} %
-          </div>
-          <img
+          </div> -->
+          <!-- <img
             v-if="progressImage && isLoading"
             :src="progressImage"
             class="w-20 h-20 opacity-30"
-          />
+          /> -->
+          <div
+            v-if="error"
+            class="text-slate-900 font-semibold text-xl mt-5 max-w-[285px] text-center"
+          >
+            Oops... Looks like something went wrong. Try again!
+          </div>
         </ClientOnly>
+        <a
+          v-if="mainImageSrc"
+          href="#"
+          class="absolute bottom-6 right-6 bg-white rounded-md p-3"
+        >
+          <img src="~/assets/img/icon-download.svg" class="w-7 h-7" />
+        </a>
       </div>
       <div class="flex flex-col bg-slate-900 overflow-hidden">
         <EditProperties
@@ -199,7 +233,7 @@ const onResetEditProperties = () => {
             />
           </fieldset>
           <fieldset>
-            <FormToggle v-model="fixedStyle" label="Fixed style" />
+            <FormToggle v-model="fixedStyle" label="Generate similar" />
           </fieldset>
           <fieldset>
             <FormRange
@@ -246,7 +280,94 @@ const onResetEditProperties = () => {
               </template>
             </FormRange>
           </fieldset>
-          <FormButton is-full-width @click="onGenerate"> Generate </FormButton>
+
+          <fieldset>
+            <div class="grid grid-cols-3 gap-4">
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_PORTRAIT
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_PORTRAIT"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-3 h-5 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_PORTRAIT
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_LANDSCAPE
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_LANDSCAPE"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-5 h-3 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_LANDSCAPE
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+              <label
+                :class="[
+                  'flex items-center justify-center p-2 rounded-md',
+                  aspectRatio === ASPECT_RATIO_SQUARE
+                    ? 'bg-amber-100'
+                    : 'bg-slate-800',
+                ]"
+              >
+                <input
+                  type="radio"
+                  v-model="aspectRatio"
+                  name="aspect-ratio"
+                  :value="ASPECT_RATIO_SQUARE"
+                  class="hidden"
+                />
+                <div
+                  :class="[
+                    'w-5 h-5 border-2 rounded-sm',
+                    aspectRatio === ASPECT_RATIO_SQUARE
+                      ? 'border-slate-900'
+                      : 'border-slate-400',
+                  ]"
+                />
+              </label>
+            </div>
+          </fieldset>
+          <FormButton
+            v-if="isLoading"
+            variant="secondary"
+            is-full-width
+            @click="onCancel"
+          >
+            Cancel
+          </FormButton>
+          <FormButton v-else is-full-width @click="onGenerate">
+            Generate
+          </FormButton>
         </div>
 
         <div
@@ -256,12 +377,16 @@ const onResetEditProperties = () => {
             { 'flex-grow': panelState === PanelState.Result },
           ]"
         >
-          <span
+          <div
             v-if="panelState === PanelState.Result"
-            class="block w-full text-center font-medium text-slate-300"
+            class="flex justify-between"
           >
-            Variations
-          </span>
+            <span class="block w-full font-medium text-slate-300">
+              Variations
+            </span>
+
+            <a href="#" class="is-link whitespace-nowrap">Download all</a>
+          </div>
           <div
             :class="[
               'gap-3 overflow-scroll h-full',
@@ -277,6 +402,8 @@ const onResetEditProperties = () => {
                   'cursor-pointer h-auto transition ease-in-out rounded',
                   {
                     'w-12': panelState === PanelState.Minimal,
+                    'outline outline-4 outline-purple-500 -outline-offset-4':
+                      mainImageSrc === `data:image/png;base64,${image}`,
                   },
                 ]"
                 @click="onChangeImage(image)"
