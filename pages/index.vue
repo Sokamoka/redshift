@@ -163,7 +163,7 @@ const onCancel = () => {
         class="flex flex-col items-center justify-center w-full relative overflow-hidden"
       >
         <img
-          v-if="!isLoading && !mainImageSrc"
+          v-if="!isLoading && !mainImageSrc && !error"
           src="~/assets/img/logo.svg"
           class="w-auto h-24"
         />
